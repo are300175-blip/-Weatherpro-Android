@@ -1,0 +1,42 @@
+
+name: Build WeatherPro APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'WeatherProAndroid_v3_Alerts.zip'
+      - '.github/workflows/build-apk.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract project
+        run: |
+          mkdir project
+          unzip -q WeatherProAndroid_v3_Alerts.zip -d project
+          find project -name gradlew -type f
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Build APK
+        run: |
+          cd project
+          GRADLEW=$(find . -name gradlew -type f | head -n 1)
+          chmod +x "$GRADLEW"
+          cd "$(dirname "$GRADLEW")"
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: WeatherPro-APK
+          path: project/**/build/outputs/apk/debug/*.apk
